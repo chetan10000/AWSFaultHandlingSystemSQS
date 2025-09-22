@@ -1,0 +1,118 @@
+service: mytestapp
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: eu-central-1
+  deploymentBucket:
+    name: task-bucket-1234  
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - lambda:*
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+            - dynamodb:PutItem
+            - dynamodb:DescribeTable
+            - s3:CreateBucket
+            - s3:PutObject
+            - cloudformation:CreateStack
+            - cloudformation:UpdateStack
+            - iam:PassRole
+          Resource:
+            - Fn::GetAtt: [TestQueue, Arn]
+            - Fn::GetAtt: [DeadLQueue, Arn]
+            - arn:aws:dynamodb:eu-central-1:964680330543:table/Tasks
+            - arn:aws:s3:::task-bucket-1234
+            - arn:aws:s3:::task-bucket-1234/*
+
+functions:
+  submit:
+    handler: src/submitTask.submit
+    environment:
+      QUEUE_URL: 
+        Ref: TestQueue
+    events:
+      - http:
+          path: submit
+          method: post
+
+  process:
+    handler: src/processTask.process
+    environment:
+      QUEUE_URL: 
+        Ref: TestQueue
+    events:
+      - sqs:
+          arn: 
+            Fn::GetAtt: 
+              - TestQueue
+              - Arn
+
+  handlerDLQ:
+    handler: src/manageDLQ.handlerDLQ
+    environment:
+      QUEUE_URL: 
+        Ref: TestQueue
+    events:
+      - sqs:
+          arn: 
+            Fn::GetAtt:
+              - DeadLQueue
+              - Arn
+
+resources:
+  Resources:
+    MyDynamoTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Tasks
+        AttributeDefinitions:
+          - AttributeName: taskId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: taskId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    TestQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: TestQueue
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt: [DeadLQueue, Arn]
+          maxReceiveCount: 2
+
+    DeadLQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: DeadLQueue
+
+    
+
+
+  
+
+
+
+
+plugins:
+  - serverless-esbuild
+
+custom:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    target: node18
+    platform: node
+    concurrency: 10
+    external: []
+
