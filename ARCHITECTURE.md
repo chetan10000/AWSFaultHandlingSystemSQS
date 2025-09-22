@@ -1,7 +1,7 @@
 
 # 🏗️ System Architecture
 
-![Architecture Diagram](./docs/architecture.png)
+![Architecture Diagram](./architecture.png)
 
 ## Components
 - **API Gateway**: Receives incoming HTTP requests.
