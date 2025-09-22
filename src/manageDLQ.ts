@@ -39,19 +39,7 @@ export const handlerDLQ:SQSHandler = async(event:SQSEvent)=>{
              continue;
         }
 
-        try
-        {
-                 const params = 
-                {
-                    QueueUrl:URL,
-                    MessageBody:JSON.stringify(task)
-                };
-                const cmd = new SendMessageCommand(params);
-                await sqsclient.send(cmd);
-                console.log("message send to queue: ",URL);
-        }catch(error){
-            console.error("failed to send message to queue : ",error)
-        }
+  
        
     }
    
