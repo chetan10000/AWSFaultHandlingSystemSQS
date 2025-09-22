@@ -28,7 +28,7 @@ provider:
           Resource:
             - Fn::GetAtt: [TestQueue, Arn]
             - Fn::GetAtt: [DeadLQueue, Arn]
-            - arn:aws:dynamodb:eu-central-1:964680330543:table/Tasks
+            - arn:aws:dynamodb:eu-central-1:<account-Id>:table/Tasks
             - arn:aws:s3:::task-bucket-1234
             - arn:aws:s3:::task-bucket-1234/*
 
